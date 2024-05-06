@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="webview_default_title">Goibibo</string>
+    <string name="cf_no_net_title">No Internet Connection</string>
+    <string name="error">Error</string>
+    <string name="close">CLOSE</string>
+    <string name="something_went_wrong">Something went wrong</string>
+    <string name="trip_money_permission_messgae">Please allow Camera &amp; Storage permissions.></string>
+    <string name="go_to_settings">Go to Settings</string>
+</resources>
