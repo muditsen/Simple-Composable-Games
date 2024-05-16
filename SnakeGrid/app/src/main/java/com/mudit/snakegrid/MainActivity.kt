@@ -122,28 +122,28 @@ fun Grid(row: Int, col: Int) {
 
 
     
-//    LazyVerticalGrid(columns = GridCells.Fixed(10), Modifier.onGloballyPositioned {
-//        measuredHeight =
-//            (it.size.width / (10 * Resources.getSystem().displayMetrics.density)).toInt()
-//    }) {
-//        tick
-//        items(row * col) {
-//
-//            val modifier = if (snake.contains(it)) {
-//                Modifier
-//                    .background(Color.White)
-//            } else {
-//                Modifier
-//                    .background(Color.Black)
-//            }
-//            Box(
-//                modifier = modifier
-//                    .height(Dp(measuredHeight.toFloat()))
-//                    .border(0.1.dp, Color.White)
-//            )
-//
-//        }
-//    }
+    LazyVerticalGrid(columns = GridCells.Fixed(10), Modifier.onGloballyPositioned {
+        measuredHeight =
+            (it.size.width / (10 * Resources.getSystem().displayMetrics.density)).toInt()
+    }) {
+        tick
+        items(row * col) {
+
+            val modifier = if (snake.contains(it)) {
+                Modifier
+                    .background(Color.White)
+            } else {
+                Modifier
+                    .background(Color.Black)
+            }
+            Box(
+                modifier = modifier
+                    .height(Dp(measuredHeight.toFloat()))
+                    .border(0.1.dp, Color.White)
+            )
+
+        }
+    }
 
 
 }
