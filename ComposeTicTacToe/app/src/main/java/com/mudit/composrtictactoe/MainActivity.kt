@@ -1,6 +1,5 @@
 package com.mudit.composrtictactoe
 
-import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -8,17 +7,20 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -26,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,19 +39,24 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.core.os.bundleOf
 import androidx.navigation.NavController
+import androidx.navigation.Navigator
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import androidx.navigation.navOptions
 import com.mudit.composrtictactoe.ui.theme.ComposrTicTacToeTheme
 
 /***********************************************************************
@@ -67,7 +75,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                 ) { innerPadding ->
                     GradientBackground {
-                        Navigator(innerPadding)
+                        GameNavigator(innerPadding)
                     }
 
                 }
@@ -82,14 +90,16 @@ sealed class Screen(val route: String) {
 }
 
 @Composable
-fun Navigator(paddingValues: PaddingValues) {
+fun GameNavigator(paddingValues: PaddingValues) {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = Screen.Screen1.route) {
         composable(Screen.Screen1.route) {
             Menu(navController)
         }
-        composable(Screen.Screen2.route) {
+        composable(Screen.Screen2.route, arguments = listOf(navArgument("selected") {
+            defaultValue = 'x'
+        })) {
             Game(navController)
         }
     }
@@ -133,6 +143,10 @@ fun checkWinner(displayXorO: Array<CharArray>): Boolean {
             isWon = false
         }
     }
+    if (isWon) {
+        Log.e("Mudit Log", "DIAGONAL")
+        return true
+    }
 
     isWon = true
     for (i in 0 until SIZE - 1) {
@@ -140,9 +154,11 @@ fun checkWinner(displayXorO: Array<CharArray>): Boolean {
             isWon = false
         }
     }
-
-    Log.e("Mudit Log ", "$isWon Diagonal")
-    return isWon
+    if (isWon) {
+        Log.e("Mudit Log", "CROSS DIAGONAL")
+        return true
+    }
+    return false
 }
 
 @Composable
@@ -185,6 +201,17 @@ fun Game(navController: NavController? = null, innerPadding: PaddingValues? = nu
         mutableStateOf("")
     }
 
+    var xWonCount by remember {
+        mutableStateOf(0)
+    }
+
+    var oWonCount by remember {
+        mutableStateOf(0)
+    }
+
+    LaunchedEffect(key1 = true) {
+        turn = navController?.currentBackStackEntry?.arguments?.getChar("selected") ?: 'x'
+    }
 
     val resetGame: () -> Unit = {
         displayXorO = Array(SIZE) {
@@ -216,14 +243,43 @@ fun Game(navController: NavController? = null, innerPadding: PaddingValues? = nu
         item(span = {
             GridItemSpan(3)
         }) {
-            Text(
-                text = if (isWon) "${turn.uppercase()} won" else "Turn Of ${turn.uppercase()}",
-                color = Color.White,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                textAlign = TextAlign.Center
-            )
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 40.dp, bottom = 40.dp)
+            ) {
+                Text(
+                    text = if (isWon) "${turn.uppercase()} won" else "Turn Of",
+                    color = Color.White,
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Bold,
+                    style = TextStyle(
+                        shadow = Shadow(
+                            Color(0x55000000),
+                            offset = Offset(5f, 5f),
+                            blurRadius = 16f
+                        )
+                    ),
+                    modifier = Modifier
+                        .padding(16.dp),
+                    textAlign = TextAlign.Center
+                )
+
+                if (turn == 'x') {
+                    Image(
+                        painter = painterResource(id = R.drawable.img_x),
+                        contentDescription = null,
+                        modifier = Modifier.size(50.dp)
+                    )
+                } else if (turn == 'o') {
+                    Image(
+                        painter = painterResource(id = R.drawable.img_o),
+                        contentDescription = null,
+                        modifier = Modifier.size(50.dp)
+                    )
+                }
+            }
+
         }
 
         for (i in 0 until SIZE) {
@@ -247,6 +303,11 @@ fun Game(navController: NavController? = null, innerPadding: PaddingValues? = nu
                                             turn = if (turn == 'x') 'o' else 'x'
                                         }
                                     } else {
+                                        if (turn == 'x') {
+                                            xWonCount++
+                                        } else {
+                                            oWonCount++
+                                        }
                                         dialogText = "${turn.uppercase()} won"
                                         dialogVisible = true
                                     }
@@ -261,24 +322,14 @@ fun Game(navController: NavController? = null, innerPadding: PaddingValues? = nu
                                 modifier = Modifier
                                     .padding(24.dp)
                                     .fillMaxSize()
-//                            textAlign = TextAlign.Center,
-//                            text = displayXorO[i][j].toString(),
-//                            color = Color.White,
-//                            fontSize = 40.sp,
-//                            fontFamily = FontFamily.SansSerif
                             )
                         } else if (displayXorO[i][j] == 'o') {
                             Image(
                                 painter = painterResource(id = R.drawable.ic_o),
                                 contentDescription = null,
-//                            textAlign = TextAlign.Center,
-//                            text = displayXorO[i][j].toString(),
                                 modifier = Modifier
                                     .padding(24.dp)
                                     .fillMaxSize()
-//                            color = Color.White,
-//                            fontSize = 40.sp,
-//                            fontFamily = FontFamily.SansSerif
                             )
                         }
 
@@ -290,17 +341,103 @@ fun Game(navController: NavController? = null, innerPadding: PaddingValues? = nu
         item(span = {
             GridItemSpan(3)
         }) {
-            Text(
-                text = "RESET",
-                color = Color.White,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .clickable {
-                        resetGame()
-                    },
-                textAlign = TextAlign.Center
-            )
+            Column {
+                Text(
+                    text = "RESET",
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    style = TextStyle(
+                        shadow = Shadow(
+                            Color(0x55000000),
+                            offset = Offset(5f, 5f),
+                            blurRadius = 16f
+                        )
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .clickable {
+                            resetGame()
+                        },
+                    textAlign = TextAlign.Center
+                )
+
+                Text(
+                    text = "Score",
+                    color = Color.White,
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Bold,
+                    style = TextStyle(
+                        shadow = Shadow(
+                            Color(0x55000000),
+                            offset = Offset(5f, 5f),
+                            blurRadius = 16f
+                        )
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .clickable {
+                            resetGame()
+                        },
+                    textAlign = TextAlign.Center
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.img_x),
+                        contentDescription = null,
+                        modifier = Modifier.size(45.dp)
+                    )
+
+                    Text(
+                        text = "$xWonCount",
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        style = TextStyle(
+                            shadow = Shadow(
+                                Color(0x55000000),
+                                offset = Offset(5f, 5f),
+                                blurRadius = 16f
+                            )
+                        ),
+                        modifier = Modifier.padding(start = 10.dp, end = 10.dp),
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Image(
+                        painter = painterResource(id = R.drawable.img_o),
+                        contentDescription = null,
+                        modifier = Modifier.size(45.dp)
+                    )
+
+                    Text(
+                        text = "$oWonCount",
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        style = TextStyle(
+                            shadow = Shadow(
+                                Color(0x55000000),
+                                offset = Offset(5f, 5f),
+                                blurRadius = 16f
+                            )
+                        ),
+                        modifier = Modifier
+                            .padding(start = 10.dp, end = 10.dp),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
         }
 
 
@@ -308,22 +445,52 @@ fun Game(navController: NavController? = null, innerPadding: PaddingValues? = nu
 
 
     if (dialogVisible) {
-        Dialog(onDismissRequest = { resetGame(); dialogVisible = false }) {
+        Dialog(
+            onDismissRequest = { resetGame(); dialogVisible = false }) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier
                     .padding(16.dp)
-                    .background(Color.White)
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
+                    .background(Color.White)
                     .padding(16.dp)
             ) {
-                Text(text = "$turn Won")
-                Text(text = "Play Again", modifier = Modifier.clickable {
-                    resetGame()
-                    dialogVisible = false
-                })
+                Text(
+                    text = "$turn Won",
+                    color = Color(0xFF222222),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    style = TextStyle(
+                        shadow = Shadow(
+                            Color(0x55000000),
+                            offset = Offset(5f, 5f),
+                            blurRadius = 16f
+                        )
+                    ),
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .clickable {
+                            resetGame()
+                        },
+                    textAlign = TextAlign.Center
+                )
+                Text(text = "Play Again",
+                    color = Color(0xFF222222),
+                    style = TextStyle(
+                        shadow = Shadow(
+                            Color(0x55000000),
+                            offset = Offset(5f, 5f),
+                            blurRadius = 16f
+                        )
+                    ),
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .clickable {
+                            resetGame()
+                            dialogVisible = false
+                        })
             }
 
         }
@@ -347,26 +514,67 @@ fun Menu(navController: NavController? = null) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        Image(
-            contentDescription = null,
-            contentScale = ContentScale.Fit,
-            painter = painterResource(id = R.drawable.tic_tac_toe),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-        )
-
         Text(
-            text = "Play",
+            text = "TIC TAC TOE",
+            fontSize = 52.sp,
             color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily.SansSerif,
+            style = TextStyle(
+                shadow = Shadow(
+                    Color(0x99000000),
+                    offset = Offset(5f, 5f),
+                    blurRadius = 16f
+                )
+            ),
             modifier = Modifier
                 .fillMaxWidth()
+
+                .fillMaxHeight(0.25f)
                 .padding(16.dp)
                 .clickable {
                     navController?.navigate(Screen.Screen2.route)
                 },
             textAlign = TextAlign.Center
         )
+
+        Text(
+            text = "Pick who goes first?",
+            fontSize = 24.sp,
+            color = Color.White,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .clickable {
+                    navController?.navigate(Screen.Screen2.route + "?selected=x")
+                },
+            textAlign = TextAlign.Center
+        )
+
+
+        Row {
+            Image(
+                painter = painterResource(id = R.drawable.img_x),
+                contentDescription = null,
+                modifier = Modifier
+                    .weight(0.8f)
+                    .padding(start = 24.dp)
+                    .clickable {
+                        navController?.navigate(Screen.Screen2.route)
+                    }
+            )
+
+            Image(
+                painter = painterResource(id = R.drawable.img_o),
+                contentDescription = null,
+                modifier = Modifier
+                    .weight(0.8f)
+                    .padding(end = 24.dp)
+                    .clickable {
+                        navController?.navigate(Screen.Screen2.route)
+                    }
+            )
+        }
 
     }
 }
@@ -379,11 +587,6 @@ fun GradientBackground(compose: @Composable () -> Unit) {
             .background(
                 brush = Brush.linearGradient(
                     colors = listOf(Color(0xFF00D2FF), Color(0xFF3A7BD5)),
-//                    start = Offset(0f, 0f), // Start position of the gradient (x, y)
-//                    end = Offset(
-//                        LocalConfiguration.current.screenWidthDp.toFloat(),
-//                        LocalConfiguration.current.screenHeightDp.toFloat()
-//                    ), // End position of the gradient (x, y)
                     tileMode = androidx.compose.ui.graphics.TileMode.Clamp // TileMode
                 )
             )
@@ -391,3 +594,10 @@ fun GradientBackground(compose: @Composable () -> Unit) {
         compose()
     }
 }
+
+@Preview
+@Composable
+fun MenuPreview() {
+    Menu()
+}
+
