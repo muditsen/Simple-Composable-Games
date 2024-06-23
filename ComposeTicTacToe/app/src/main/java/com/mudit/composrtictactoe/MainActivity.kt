@@ -25,6 +25,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,15 +50,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.core.os.bundleOf
 import androidx.navigation.NavController
-import androidx.navigation.Navigator
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.navigation.navOptions
 import com.mudit.composrtictactoe.ui.theme.ComposrTicTacToeTheme
 
 /***********************************************************************
@@ -97,9 +95,8 @@ fun GameNavigator(paddingValues: PaddingValues) {
         composable(Screen.Screen1.route) {
             Menu(navController)
         }
-        composable(Screen.Screen2.route, arguments = listOf(navArgument("selected") {
-            defaultValue = 'x'
-        })) {
+        composable(Screen.Screen2.route+"/{selected}") {
+            val data = it.arguments?.getString("selected")
             Game(navController)
         }
     }
@@ -161,6 +158,7 @@ fun checkWinner(displayXorO: Array<CharArray>): Boolean {
     return false
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Game(navController: NavController? = null, innerPadding: PaddingValues? = null) {
 
@@ -210,7 +208,9 @@ fun Game(navController: NavController? = null, innerPadding: PaddingValues? = nu
     }
 
     LaunchedEffect(key1 = true) {
-        turn = navController?.currentBackStackEntry?.arguments?.getChar("selected") ?: 'x'
+        turn = navController?.currentBackStackEntry?.arguments?.getString("selected")?.toCharArray()
+            ?.get(0)
+            ?: 'x'
     }
 
     val resetGame: () -> Unit = {
@@ -445,20 +445,20 @@ fun Game(navController: NavController? = null, innerPadding: PaddingValues? = nu
 
 
     if (dialogVisible) {
-        Dialog(
+        ModalBottomSheet(
+            dragHandle = null,
             onDismissRequest = { resetGame(); dialogVisible = false }) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier
-                    .padding(16.dp)
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
                     .background(Color.White)
                     .padding(16.dp)
             ) {
                 Text(
-                    text = "$turn Won",
+                    text = dialogText,
                     color = Color(0xFF222222),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
@@ -544,10 +544,7 @@ fun Menu(navController: NavController? = null) {
             color = Color.White,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
-                .clickable {
-                    navController?.navigate(Screen.Screen2.route + "?selected=x")
-                },
+                .padding(16.dp),
             textAlign = TextAlign.Center
         )
 
@@ -560,7 +557,7 @@ fun Menu(navController: NavController? = null) {
                     .weight(0.8f)
                     .padding(start = 24.dp)
                     .clickable {
-                        navController?.navigate(Screen.Screen2.route)
+                        navController?.navigate(Screen.Screen2.route + "/x")
                     }
             )
 
@@ -571,7 +568,7 @@ fun Menu(navController: NavController? = null) {
                     .weight(0.8f)
                     .padding(end = 24.dp)
                     .clickable {
-                        navController?.navigate(Screen.Screen2.route)
+                        navController?.navigate(Screen.Screen2.route + "/o")
                     }
             )
         }
